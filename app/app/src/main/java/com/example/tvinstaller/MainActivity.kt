@@ -34,6 +34,22 @@ import java.net.Socket
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val prefs = getSharedPreferences("crash", Context.MODE_PRIVATE)
+        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+            prefs.edit().putString("log", android.util.Log.getStackTraceString(e)).commit()
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
+        val saved = prefs.getString("log", null)
+        if (saved != null) {
+            prefs.edit().remove("log").apply()
+            val tv = android.widget.TextView(this).apply {
+                text = saved
+                setPadding(32, 96, 32, 32)
+                setTextIsSelectable(true)
+            }
+            setContentView(android.widget.ScrollView(this).apply { addView(tv) })
+            return
+        }
         setContent { MaterialTheme { Surface(Modifier.fillMaxSize()) { App() } } }
     }
 }
